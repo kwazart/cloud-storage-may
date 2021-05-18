@@ -24,6 +24,7 @@ public class ClientHandler implements Runnable {
 				}
 				if ("download".equals(command)) {
 					// TODO: 13.05.2021 downloading
+					downloading(out, in);
 				}
 				if ("exit".equals(command)) {
 					out.writeUTF("DONE");
@@ -38,6 +39,38 @@ public class ClientHandler implements Runnable {
 			System.out.printf("Client %s disconnected\n", socket.getInetAddress());
 		}
 		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Put file on request
+ 	 * @param out
+	 * @param in
+	 */
+	private void downloading(DataOutputStream out, DataInputStream in) {
+		try {
+			String filename = in.readUTF();
+			File file = new File("server/" + filename);
+			if (file.exists()) {
+				long fileLength = file.length();
+				FileInputStream fis = new FileInputStream(file);
+				out.writeUTF(filename);
+				out.writeLong(fileLength);
+
+				int read = 0;
+				byte[] buffer = new byte[8 * 1024];
+				while ((read = fis.read(buffer)) != -1) {
+					out.write(buffer, 0, read);
+				}
+				out.flush();
+
+				String status = in.readUTF();
+				System.out.println("Sending status: " + status);
+			} else {
+				out.writeUTF("File not found");
+			}
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
